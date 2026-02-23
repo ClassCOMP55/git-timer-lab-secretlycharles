@@ -19,38 +19,45 @@ public class DodgeBall extends GraphicsProgram implements ActionListener {
 	private GLabel text;
 	private Timer movement;
 	private RandomGenerator rgen;
-	
+	private int numTimes;
+
 	public static final int SIZE = 25;
 	public static final int SPEED = 2;
 	public static final int MS = 50;
-	public static final int MAX_ENEMIES = 10;
 	public static final int WINDOW_HEIGHT = 600;
 	public static final int WINDOW_WIDTH = 300;
-	
+
 	public void run() {
 		rgen = RandomGenerator.getInstance();
 		balls = new ArrayList<GOval>();
 		enemies = new ArrayList<GRect>();
-		
-		text = new GLabel(""+enemies.size(), 0, WINDOW_HEIGHT);
+		numTimes = 0;
+
+		text = new GLabel("" + enemies.size(), 0, WINDOW_HEIGHT);
 		add(text);
-		
+
 		movement = new Timer(MS, this);
 		movement.start();
 		addMouseListeners();
 	}
-	
+
 	public void actionPerformed(ActionEvent e) {
+		numTimes++;
+		if (numTimes % 40 == 0) {
+			addAnEnemy();
+		}
 		moveAllBallsOnce();
+		moveAllEnemiesOnce();
+		checkCollisions();
 	}
-	
+
 	public void mousePressed(MouseEvent e) {
-		for(GOval b:balls) {
-			if(b.getX() < SIZE * 2.5) {
+		for (GOval b : balls) {
+			if (b.getX() < 100) {
 				return;
 			}
 		}
-		addABall(e.getY());     
+		addABall(e.getY());
 	}
 	
 	private void addABall(double y) {
@@ -81,11 +88,30 @@ public class DodgeBall extends GraphicsProgram implements ActionListener {
 	}
 
 	private void moveAllBallsOnce() {
-		for(GOval ball:balls) {
+		for (GOval ball : balls) {
 			ball.move(SPEED, 0);
 		}
 	}
-	
+
+	private void moveAllEnemiesOnce() {
+		for (GRect enemy : enemies) {
+			enemy.move(0, rgen.nextInt(-2, 2));
+		}
+	}
+
+	private void checkCollisions() {
+		for (GOval ball : balls) {
+			double checkX = ball.getX() + ball.getWidth() + 1;
+			double checkY = ball.getY() + ball.getHeight() / 2;
+			GObject hit = getElementAt(checkX, checkY);
+			if (hit instanceof GRect) {
+				remove(hit);
+				enemies.remove((GRect) hit);
+				text.setLabel("" + enemies.size());
+			}
+		}
+	}
+
 	public void init() {
 		setSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 	}
